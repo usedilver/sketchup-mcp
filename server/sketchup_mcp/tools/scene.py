@@ -23,6 +23,15 @@ def register(mcp: FastMCP) -> None:
         return connection.send("get_selection")
 
     @mcp.tool()
+    def set_selection(ids: list[int]) -> dict:
+        """Replace the model selection with the entities matching `ids`.
+
+        Returns `{requested, selected, missing}` so the client can
+        detect stale IDs that no longer exist in the model.
+        """
+        return connection.send("set_selection", {"ids": ids})
+
+    @mcp.tool()
     def export_scene(
         format: ExportFormat = "skp",
         path: str | None = None,
