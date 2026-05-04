@@ -6,9 +6,9 @@ be added to the imports below.
 """
 from mcp.server.fastmcp import FastMCP
 
-from . import components, materials, ruby, scene, transforms
+from . import components, joints, materials, ruby, scene, transforms
 
 
 def register(mcp: FastMCP) -> None:
-    for module in (ruby, scene, components, transforms, materials):
+    for module in (ruby, scene, components, transforms, materials, joints):
         module.register(mcp)
