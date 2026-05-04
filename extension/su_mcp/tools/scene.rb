@@ -41,6 +41,15 @@ module SU_MCP
         { count: entities.length, entities: entities }
       end
 
+      def self.set_selection(params)
+        ids = Array(params["ids"]).map(&:to_i)
+        model = Sketchup.active_model
+        model.selection.clear
+        resolved = ids.map { |i| model.find_entity_by_id(i) }.compact
+        model.selection.add(resolved) unless resolved.empty?
+        { success: true, requested: ids.length, selected: resolved.length, missing: ids.length - resolved.length }
+      end
+
       # Export the active model. Writes to a system-temp subdirectory by
       # default; pass `path` to override. For images (png/jpg) `width`
       # and `height` control the rendered size.
@@ -85,4 +94,5 @@ end
 
 SU_MCP::Dispatcher.register("get_scene_info") { |params| SU_MCP::Tools::Scene.info(params) }
 SU_MCP::Dispatcher.register("get_selection")  { |params| SU_MCP::Tools::Scene.selection(params) }
+SU_MCP::Dispatcher.register("set_selection")  { |params| SU_MCP::Tools::Scene.set_selection(params) }
 SU_MCP::Dispatcher.register("export_scene")   { |params| SU_MCP::Tools::Scene.export(params) }
