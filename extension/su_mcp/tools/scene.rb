@@ -88,6 +88,31 @@ module SU_MCP
         dir = File.join(Dir.tmpdir, EXPORT_SUBDIR)
         File.join(dir, "sketchup_export_#{Time.now.strftime('%Y%m%d_%H%M%S')}.#{ext}")
       end
+
+      # Optionally aim the camera, then render the active view to PNG.
+      # `camera` is `{eye, target, up, perspective?, fov?}` — all required
+      # together if provided.
+      def self.snapshot(params)
+        width       = (params["width"]       || 1600).to_i
+        height      = (params["height"]      || 1000).to_i
+        antialias   = params["antialias"] != false
+        compression = (params["compression"] || 0.9).to_f
+        path        = params["path"] || File.join(Dir.tmpdir, EXPORT_SUBDIR, "snapshot_#{Time.now.strftime('%Y%m%d_%H%M%S')}.png")
+        FileUtils.mkdir_p(File.dirname(path))
+
+        view = Sketchup.active_model.active_view
+        if (cam = params["camera"])
+          eye    = cam["eye"]    && Geom::Point3d.new(*cam["eye"])
+          target = cam["target"] && Geom::Point3d.new(*cam["target"])
+          up     = cam["up"]     && Geom::Vector3d.new(*cam["up"])
+          if eye && target && up
+            view.camera = Sketchup::Camera.new(eye, target, up, cam.fetch("perspective", true), cam["fov"] || 50.0)
+          end
+        end
+
+        view.write_image(path, width, height, antialias, compression)
+        { success: true, path: path, width: width, height: height }
+      end
     end
   end
 end
@@ -96,3 +121,4 @@ SU_MCP::Dispatcher.register("get_scene_info") { |params| SU_MCP::Tools::Scene.in
 SU_MCP::Dispatcher.register("get_selection")  { |params| SU_MCP::Tools::Scene.selection(params) }
 SU_MCP::Dispatcher.register("set_selection")  { |params| SU_MCP::Tools::Scene.set_selection(params) }
 SU_MCP::Dispatcher.register("export_scene")   { |params| SU_MCP::Tools::Scene.export(params) }
+SU_MCP::Dispatcher.register("snapshot")       { |params| SU_MCP::Tools::Scene.snapshot(params) }
