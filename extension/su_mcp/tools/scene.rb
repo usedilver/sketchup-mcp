@@ -1,6 +1,14 @@
+require "fileutils"
+require "tmpdir"
+
 module SU_MCP
   module Tools
     module Scene
+      EXPORT_SUBDIR = "sketchup_exports".freeze
+      DEFAULT_IMG_W = 1920
+      DEFAULT_IMG_H = 1080
+      SUPPORTED_FORMATS = %w[skp obj dae stl png jpg jpeg].freeze
+
       def self.info(_params)
         model = Sketchup.active_model
         info_units = model.options["UnitsOptions"]
@@ -32,9 +40,49 @@ module SU_MCP
         end
         { count: entities.length, entities: entities }
       end
+
+      # Export the active model. Writes to a system-temp subdirectory by
+      # default; pass `path` to override. For images (png/jpg) `width`
+      # and `height` control the rendered size.
+      def self.export(params)
+        model  = Sketchup.active_model
+        format = (params["format"] || "skp").to_s.downcase
+        raise ArgumentError, "Unsupported export format: #{format}" unless SUPPORTED_FORMATS.include?(format)
+
+        path = params["path"] || default_export_path(format)
+        FileUtils.mkdir_p(File.dirname(path))
+
+        case format
+        when "skp"
+          model.save(path)
+        when "obj"
+          model.export(path, triangulated_faces: true, double_sided_faces: true, edges: false, texture_maps: true)
+        when "dae"
+          model.export(path, triangulated_faces: true)
+        when "stl"
+          model.export(path, units: "model")
+        when "png", "jpg", "jpeg"
+          model.active_view.write_image(
+            filename:    path,
+            width:       (params["width"]  || DEFAULT_IMG_W).to_i,
+            height:      (params["height"] || DEFAULT_IMG_H).to_i,
+            antialias:   true,
+            transparent: format == "png",
+          )
+        end
+
+        { success: true, path: path, format: format }
+      end
+
+      def self.default_export_path(format)
+        ext = format == "jpg" ? "jpeg" : format
+        dir = File.join(Dir.tmpdir, EXPORT_SUBDIR)
+        File.join(dir, "sketchup_export_#{Time.now.strftime('%Y%m%d_%H%M%S')}.#{ext}")
+      end
     end
   end
 end
 
 SU_MCP::Dispatcher.register("get_scene_info") { |params| SU_MCP::Tools::Scene.info(params) }
-SU_MCP::Dispatcher.register("get_selection") { |params| SU_MCP::Tools::Scene.selection(params) }
+SU_MCP::Dispatcher.register("get_selection")  { |params| SU_MCP::Tools::Scene.selection(params) }
+SU_MCP::Dispatcher.register("export_scene")   { |params| SU_MCP::Tools::Scene.export(params) }
