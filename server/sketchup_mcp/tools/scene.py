@@ -52,3 +52,25 @@ def register(mcp: FastMCP) -> None:
         if height is not None:
             params["height"] = height
         return connection.send("export_scene", params)
+
+    @mcp.tool()
+    def snapshot(
+        width: int = 1600,
+        height: int = 1000,
+        camera: dict | None = None,
+        path: str | None = None,
+        antialias: bool = True,
+    ) -> dict:
+        """Render the current view to a PNG.
+
+        - `camera`: optional `{eye: [x,y,z], target: [x,y,z], up: [x,y,z],
+          perspective?: bool, fov?: float}` — all of eye/target/up
+          required together. Omit to use the current camera.
+        - `path`: output file (default: temp dir, timestamped name)
+        """
+        params: dict = {"width": width, "height": height, "antialias": antialias}
+        if camera is not None:
+            params["camera"] = camera
+        if path is not None:
+            params["path"] = path
+        return connection.send("snapshot", params)
