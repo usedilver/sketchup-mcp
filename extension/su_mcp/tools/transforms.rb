@@ -1,16 +1,8 @@
 module SU_MCP
   module Tools
     module Transforms
-      # Resolve an entity ID that may arrive as int, "123", or '"123"'.
-      def self.find_entity!(id)
-        clean = id.to_s.gsub('"', '').to_i
-        entity = Sketchup.active_model.find_entity_by_id(clean)
-        raise ArgumentError, "Entity not found: #{id.inspect}" unless entity
-        entity
-      end
-
       def self.delete(params)
-        entity = find_entity!(params["id"])
+        entity = SU_MCP::Entities.find!(params["id"])
         entity.erase!
         { success: true }
       end
@@ -20,7 +12,7 @@ module SU_MCP
       # `rotate` is degrees around X, Y, Z about the entity's bounds center.
       # `scale` is per-axis factors about the entity's bounds center.
       def self.transform(params)
-        entity = find_entity!(params["id"])
+        entity = SU_MCP::Entities.find!(params["id"])
 
         if (t = params["translate"] || params["position"])
           entity.transform!(Geom::Transformation.translation(Geom::Point3d.new(t[0], t[1], t[2])))

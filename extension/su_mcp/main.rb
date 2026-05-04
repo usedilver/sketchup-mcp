@@ -5,6 +5,7 @@ module SU_MCP
 end
 
 require File.join(SU_MCP::PLUGIN_DIR, "logger")
+require File.join(SU_MCP::PLUGIN_DIR, "entities")
 require File.join(SU_MCP::PLUGIN_DIR, "dispatcher")
 require File.join(SU_MCP::PLUGIN_DIR, "server")
 
