@@ -6,10 +6,9 @@ be added to the imports below.
 """
 from mcp.server.fastmcp import FastMCP
 
+from . import ruby
+
 
 def register(mcp: FastMCP) -> None:
-    # Tool modules will be wired up here as they get ported.
-    # from . import components, materials, transforms, selection, joints, scene, ruby
-    # for module in (components, materials, transforms, selection, joints, scene, ruby):
-    #     module.register(mcp)
-    pass
+    for module in (ruby,):
+        module.register(mcp)
