@@ -12,6 +12,8 @@ module SU_MCP
     POLL_INTERVAL     = 0.1   # seconds between accept attempts
     READ_TIMEOUT      = 0.05  # seconds to wait for client data before giving up
 
+    attr_reader :port
+
     def self.instance
       @instance ||= new
     end
@@ -24,6 +26,10 @@ module SU_MCP
       @running   = false
     end
 
+    def running?
+      @running
+    end
+
     def start
       return if @running
 
@@ -33,7 +39,7 @@ module SU_MCP
 
       Log.info("Listening on 127.0.0.1:#{@port}")
     rescue StandardError => e
-      Log.error("Failed to start: #{e.message}")
+      Log.error("Failed to start on port #{@port}: #{e.message}")
       stop
     end
 
@@ -43,6 +49,12 @@ module SU_MCP
       @server&.close
       @server = nil
       @timer_id = nil
+    end
+
+    def restart(new_port = nil)
+      stop
+      @port = new_port if new_port
+      start
     end
 
     private
