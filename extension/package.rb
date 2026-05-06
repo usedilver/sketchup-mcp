@@ -3,7 +3,7 @@
 # Uses the system `zip` command — no Ruby gem dependencies.
 require "fileutils"
 
-VERSION  = "0.1.0"
+VERSION  = "0.2.0"
 OUT_NAME = "su_mcp_v#{VERSION}.rbz"
 TMP_DIR  = "_build"
 

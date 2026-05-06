@@ -9,7 +9,7 @@ module SU_MCP
       "SketchUp MCP",
       File.join(PLUGIN_ROOT, "su_mcp", "main")
     )
-    extension.version     = "0.1.0"
+    extension.version     = "0.2.0"
     extension.creator     = "usedilver"
     extension.copyright   = "2026"
     extension.description = "Model Context Protocol server for SketchUp."
