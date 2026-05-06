@@ -21,5 +21,7 @@ extension/_build/
 *.swp
 .DS_Store
 
-# Claude
-.claude/
+# Claude — track committed skills, ignore everything else (settings.local.json, etc.)
+.claude/*
+!.claude/skills/
+!.claude/skills/**
