@@ -21,6 +21,11 @@ class SketchUpError(RuntimeError):
     pass
 
 
+def endpoint() -> str:
+    """Return the configured SketchUp extension endpoint for messages."""
+    return f"{config.host()}:{config.port()}"
+
+
 def send(method: str, params: dict[str, Any] | None = None, request_id: int = 1) -> Any:
     """Send a JSON-RPC request to SketchUp and return the `result` field.
 
@@ -35,12 +40,21 @@ def send(method: str, params: dict[str, Any] | None = None, request_id: int = 1)
     }
     payload = json.dumps(request).encode("utf-8") + b"\n"
 
-    with socket.create_connection((config.host(), config.port()), timeout=RECV_TIMEOUT_SECONDS) as sock:
-        sock.sendall(payload)
-        sock.settimeout(RECV_TIMEOUT_SECONDS)
-        data = _recv_json(sock)
+    try:
+        with socket.create_connection((config.host(), config.port()), timeout=RECV_TIMEOUT_SECONDS) as sock:
+            sock.sendall(payload)
+            sock.settimeout(RECV_TIMEOUT_SECONDS)
+            data = _recv_json(sock)
+    except (ConnectionRefusedError, TimeoutError, socket.timeout, OSError) as exc:
+        raise SketchUpError(
+            f"SketchUp extension is not available at {endpoint()}. "
+            "Open SketchUp with the SU MCP extension enabled, then try again."
+        ) from exc
 
-    response = json.loads(data.decode("utf-8"))
+    try:
+        response = json.loads(data.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise SketchUpError("Invalid JSON response from SketchUp") from exc
     if "error" in response:
         err = response["error"]
         raise SketchUpError(err.get("message", "Unknown error from SketchUp"))
